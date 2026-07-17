@@ -198,3 +198,7 @@ log("Kode disalin");
 
 };
 }
+
+$("btnSetting").onclick=()=>{
+ $("connectionBox").classList.toggle("hidden");
+};
