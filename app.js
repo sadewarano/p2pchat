@@ -1,3 +1,4 @@
+
 const $=id=>document.getElementById(id);
 
 const status=$("status"),
@@ -178,22 +179,42 @@ if(e.key=="Enter")
 $("btnSend").click();
 };
 
+$("btnPutus").onclick=()=>{
+
+if(!active)return;
+
+let p=peers.get(active);
+
+if(p){
+
+p.pc.close();
+
+peers.delete(active);
+
+active=[...peers.keys()][0]||null;
+
+draw();
+
+}
+
+};
 
 const btnCopy = $("btnCopy");
 
 if(btnCopy){
-  btnCopy.onclick = async () => {
-    if(!localSDP.value) return;
+btnCopy.onclick = async () => {
+if(!localSDP.value) return;
 
-    localSDP.focus();
-    localSDP.select();
+localSDP.focus();  
+localSDP.select();  
 
-    try{
-      await navigator.clipboard.writeText(localSDP.value);
-    }catch(e){
-      document.execCommand("copy");
-    }
+try{  
+  await navigator.clipboard.writeText(localSDP.value);  
+}catch(e){  
+  document.execCommand("copy");  
+}  
 
-    log("Kode disalin");
-  };
+log("Kode disalin");
+
+};
 }
