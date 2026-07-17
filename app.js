@@ -6,7 +6,8 @@ remoteSDP=$("remoteSDP"),
 chat=$("chatBox"),
 msg=$("msgInput"),
 send=$("btnSend"),
-list=$("peerList");
+
+const peerName=$("peerName");
 
 const peers=new Map();
 let active=null;
@@ -28,25 +29,25 @@ chat.scrollTop=chat.scrollHeight;
 }
 
 function draw(){
-list.innerHTML="";
-peers.forEach((v,k)=>{
-let b=document.createElement("button");
-b.className="peer-btn"+(k==active?" active":"");
-b.textContent=k;
-b.onclick=()=>{active=k;draw()};
-list.appendChild(b);
-});
+
 send.disabled = !active ||
-  peers.get(active)?.dc?.readyState !== "open";
+peers.get(active)?.dc?.readyState !== "open";
+
 }
 
 function dc(id){
 let p=peers.get(id);
 
 p.dc.onopen=()=>{
-if(!active)active=id;
-status.textContent="Konek";
+
+if(!active)
+active=id;
+
+peerName.textContent=id;
+status.textContent="Online";
+
 draw();
+
 };
 
 p.dc.onmessage=e=>log(e.data,"peer");
