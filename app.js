@@ -199,20 +199,3 @@ log("Kode disalin");
 
 };
 }
-
-const btnPutus = $("btnPutus");
-
-if(btnPutus){
-  btnPutus.onclick = ()=>{
-    if(!active) return;
-
-    let p = peers.get(active);
-
-    if(p){
-      p.pc.close();
-      peers.delete(active);
-      active = [...peers.keys()][0] || null;
-      draw();
-    }
-  };
-}
