@@ -37,7 +37,8 @@ b.textContent=k;
 b.onclick=()=>{active=k;draw()};
 list.appendChild(b);
 });
-send.disabled=!active;
+send.disabled = !active ||
+  peers.get(active)?.dc?.readyState !== "open";
 }
 
 function dc(id){
