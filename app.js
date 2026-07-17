@@ -198,6 +198,18 @@ draw();
 
 };
 
-$("btnCopy").onclick = () => {
-  navigator.clipboard.writeText(localSDP.value);
-};
+const btnCopy = $("btnCopy");
+
+if(btnCopy){
+  btnCopy.onclick = async () => {
+    if(!localSDP.value) return;
+
+    try{
+      await navigator.clipboard.writeText(localSDP.value);
+      log("Kode disalin");
+    }catch(err){
+      localSDP.select();
+      document.execCommand("copy");
+    }
+  };
+}
