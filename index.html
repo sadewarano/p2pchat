@@ -7,64 +7,99 @@
 
 <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
 <h2>🌐 P2P Chat Multi</h2>
 
-<div class="card">
-  <div id="status">Status: Belum Konek</div>
-</div>
 
 <div class="card">
-  <h3>Kode Offer / Answer</h3>
-
-  <textarea id="localSDP" readonly
-    placeholder="Kode akan muncul di sini"></textarea>
-
-  <button id="btnCopy">
-    📋 Copy
-  </button>
-
-  <textarea id="remoteSDP"
-    placeholder="Tempel kode teman"></textarea>
-
-  <div class="row">
-    <button id="btnOffer">
-      🟢 Buat
-    </button>
-
-    <button id="btnAnswer">
-      🔵 Proses
-    </button>
+  <div id="status">
+    Status: Belum Konek
   </div>
 </div>
 
-<div class="card">
-  <h3>Koneksi</h3>
-  <div id="peerList">
-    Belum ada koneksi
-  </div>
-</div>
 
 <div class="card">
-  <h3>Chat</h3>
 
-  <div id="chatBox"></div>
+<h3>Peer</h3>
 
-  <input
-    id="msgInput"
-    placeholder="Ketik pesan...">
-
-  <button id="btnSend" disabled>
-    Kirim
-  </button>
+<div id="peerList">
+Belum ada koneksi
 </div>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>Chat</h3>
+
+<div id="chatBox"></div>
+
+<input id="msgInput"
+placeholder="Ketik pesan...">
+
+<button id="btnSend" disabled>
+Kirim
+</button>
+
+</div>
+
+
+
+<button id="btnSetting">
+⚙️ Koneksi
+</button>
+
+
+
+<div id="connectionBox" class="card hidden">
+
+<h3>Koneksi Baru</h3>
+
+
+<textarea id="localSDP"
+readonly
+placeholder="Kode saya">
+</textarea>
+
+
+<button id="btnCopy">
+📋 Copy
+</button>
+
+
+<textarea id="remoteSDP"
+placeholder="Tempel kode teman">
+</textarea>
+
+
+<div class="row">
+
+<button id="btnOffer">
+🟢 Buat
+</button>
+
+
+<button id="btnAnswer">
+🔵 Proses
+</button>
+
+
+</div>
+
+</div>
+
+
 
 <div id="toast">
-  Tersalin
+Tersalin
 </div>
 
 
 <script src="app.js"></script>
+
 </body>
 </html>
