@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>P2P Chat Multi</title>
+<title>P2P Chat</title>
 <link rel="stylesheet" href="style.css">
 </head>
 
@@ -11,38 +11,62 @@
 
 
 <header>
-<h2><center>🌐 P2P Chat</center></h2>
+
+<div class="profile">
+
+<div id="peerName">
+🌐 P2P Chat
+</div>
+
+<small id="status">
+Belum Konek
+</small>
+
+</div>
+
+
 <button id="btnSetting">
 ⚙️
 </button>
+
 </header>
 
-<div id="status">
-Belum Konek
-</div>
 
 
 <div class="layout">
-<div class="peer card">
 
+
+<div class="chat">
+
+<div id="chatBox">
 </div>
 
 
-<div class="chat card">
-<div id="chatBox"></div>
-
 <div class="input">
+
 <input id="msgInput"
 placeholder="Ketik pesan...">
+
+
 <button id="btnSend" disabled>
 ➤
 </button>
-</div>
-</div>
+
+
 </div>
 
+</div>
+
+
+</div>
+
+
+
 <div id="connectionBox" class="card hidden">
+
 <h3>Koneksi Baru</h3>
+
+
 <textarea id="localSDP"
 readonly
 placeholder="Kode saya">
@@ -71,10 +95,13 @@ placeholder="Tempel kode teman">
 🔵 Paste & Proses
 </button>
 
+
 </div>
 
 
 </div>
+
+
 
 <div id="toast">
 Tersalin
