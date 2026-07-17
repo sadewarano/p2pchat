@@ -197,3 +197,7 @@ draw();
 }
 
 };
+
+$("btnCopy").onclick = () => {
+  navigator.clipboard.writeText(localSDP.value);
+};
