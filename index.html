@@ -4,23 +4,31 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>P2P Chat Multi</title>
-
 <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<h2>🌐 P2P Chat Multi</h2>
+
+<header>
+<h2>🌐 P2P Chat</h2>
+
+<button id="btnSetting">
+⚙️
+</button>
+</header>
 
 
-<div class="card">
-  <div id="status">
-    Status: Belum Konek
-  </div>
+<div id="status">
+Belum Konek
 </div>
 
 
-<div class="card">
+
+<div class="layout">
+
+
+<div class="peer">
 
 <h3>Peer</h3>
 
@@ -32,26 +40,28 @@ Belum ada koneksi
 
 
 
-<div class="card">
-
-<h3>Chat</h3>
+<div class="chat">
 
 <div id="chatBox"></div>
+
+
+<div class="input">
 
 <input id="msgInput"
 placeholder="Ketik pesan...">
 
+
 <button id="btnSend" disabled>
-Kirim
+➤
 </button>
 
 </div>
 
+</div>
 
 
-<button id="btnSetting">
-⚙️ Koneksi
-</button>
+</div>
+
 
 
 
@@ -76,6 +86,7 @@ placeholder="Tempel kode teman">
 </textarea>
 
 
+
 <div class="row">
 
 <button id="btnOffer">
@@ -84,11 +95,11 @@ placeholder="Tempel kode teman">
 
 
 <button id="btnAnswer">
-🔵 Proses
+🔵 Paste & Proses
 </button>
 
-
 </div>
+
 
 </div>
 
