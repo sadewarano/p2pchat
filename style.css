@@ -153,3 +153,7 @@ button:disabled{
   display:none;
   z-index:999;
 }
+
+.hidden{
+display:none;
+}
