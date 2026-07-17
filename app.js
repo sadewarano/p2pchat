@@ -5,7 +5,7 @@ localSDP=$("localSDP"),
 remoteSDP=$("remoteSDP"),
 chat=$("chatBox"),
 msg=$("msgInput"),
-send=$("btnSend"),
+send=$("btnSend");
 
 const peerName=$("peerName");
 
