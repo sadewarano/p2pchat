@@ -100,48 +100,75 @@ $("btnAnswer").onclick=async()=>{
 
 try{
 
+// jika kolom kosong, ambil dari clipboard
+if(!remoteSDP.value.trim()){
+
+  remoteSDP.value =
+  await navigator.clipboard.readText();
+
+}
+
+
+// proses kode
 let {id,sdp}=JSON.parse(remoteSDP.value);
 
+
 let p=peers.get(id);
+
 
 if(!p){
 
 p={
-pc:new RTCPeerConnection(cfg),
-dc:null
+ pc:new RTCPeerConnection(cfg),
+ dc:null
 };
 
 peers.set(id,p);
 
 pc(id);
 
+
 p.pc.ondatachannel=e=>{
-p.dc=e.channel;
-dc(id);
+ p.dc=e.channel;
+ dc(id);
 };
 
 }
+
+
 
 if(sdp.type=="offer"){
 
 await p.pc.setRemoteDescription(sdp);
 
+
 let ans=await p.pc.createAnswer();
 
 await p.pc.setLocalDescription(ans);
 
+
 localSDP.value=JSON.stringify({
-id:id,
-sdp:p.pc.localDescription
+ id:id,
+ sdp:p.pc.localDescription
 });
+
+
+log("Answer dibuat");
+
 
 }else{
 
+
 await p.pc.setRemoteDescription(sdp);
+
+log("Koneksi berhasil");
+
 
 }
 
+
 remoteSDP.value="";
+
 
 }catch(e){
 
@@ -199,6 +226,10 @@ log("Kode disalin");
 };
 }
 
-$("btnSetting").onclick=()=>{
- $("connectionBox").classList.toggle("hidden");
-};
+const btnSetting=$("btnSetting");
+
+if(btnSetting){
+  btnSetting.onclick=()=>{
+    $("connectionBox").classList.toggle("hidden");
+  };
+}
