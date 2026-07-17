@@ -204,12 +204,15 @@ if(btnCopy){
   btnCopy.onclick = async () => {
     if(!localSDP.value) return;
 
+    localSDP.focus();
+    localSDP.select();
+
     try{
       await navigator.clipboard.writeText(localSDP.value);
-      log("Kode disalin");
-    }catch(err){
-      localSDP.select();
+    }catch(e){
       document.execCommand("copy");
     }
+
+    log("Kode disalin");
   };
 }
