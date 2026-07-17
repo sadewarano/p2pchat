@@ -8,133 +8,139 @@ send=$("btnSend"),
 list=$("peerList"),
 status=$("status");
 
-let active=null;
-
 
 function log(t,c="sys"){
-  const d=document.createElement("div");
-  d.className="msg "+c;
-  d.textContent=t;
-  chat.appendChild(d);
-  chat.scrollTop=chat.scrollHeight;
+ let d=document.createElement("div");
+ d.className="msg "+c;
+ d.textContent=t;
+ chat.appendChild(d);
+ chat.scrollTop=chat.scrollHeight;
 }
 
 
-function draw(){
-  list.innerHTML="";
+// update daftar koneksi
+function update(){
+ list.innerHTML="";
 
-  peers.forEach((p,id)=>{
-    const b=document.createElement("button");
-    b.className="peer-btn "+(id==active?"active":"");
-    b.textContent=id;
-    b.onclick=()=>{
-      active=id;
-      draw();
-    };
-    list.appendChild(b);
-  });
+ peers.forEach((p,id)=>{
+  let b=document.createElement("button");
+  b.textContent=id;
+  b.className=id==active?"peer-btn active":"peer-btn";
 
-  send.disabled=
-    !active ||
-    peers.get(active)?.dc?.readyState!="open";
+  b.onclick=()=>{
+   active=id;
+   update();
+  };
+
+  list.appendChild(b);
+ });
+
+ send.disabled=
+ !active ||
+ peers.get(active)?.dc?.readyState!="open";
 }
 
 
-// BUAT OFFER
+// buat offer
 $("btnOffer").onclick=async()=>{
 
-  localSDP.value=
-    await makeOffer();
+ let id=createPeer();
 
-  log("Offer dibuat");
+ let p=peers.get(id);
+
+ p.dc=p.pc.createDataChannel("chat");
+
+ setupDC(id);
+
+ let offer=await p.pc.createOffer();
+ await p.pc.setLocalDescription(offer);
+
+ localSDP.value=JSON.stringify({
+  id,
+  sdp:p.pc.localDescription
+ });
+
+ log("Offer dibuat");
 };
 
 
-// PROSES OFFER / ANSWER
+// proses offer/answer
 $("btnAnswer").onclick=async()=>{
 
-  try{
+ try{
 
-    const code=
-      await makeAnswer(remoteSDP.value);
+ let data=JSON.parse(remoteSDP.value);
 
-    if(code)
-      localSDP.value=code;
+ let id=data.id;
+ let p=peers.get(id);
 
-    remoteSDP.value="";
 
-  }catch(e){
+ if(!p){
 
-    log("Kode salah");
+  p=createPeer(id);
 
-  }
+  p.pc.ondatachannel=e=>{
+   p.dc=e.channel;
+   setupDC(id);
+  };
+ }
+
+
+ await p.pc.setRemoteDescription(data.sdp);
+
+
+ if(data.sdp.type=="offer"){
+
+  let ans=await p.pc.createAnswer();
+
+  await p.pc.setLocalDescription(ans);
+
+  localSDP.value=JSON.stringify({
+   id,
+   sdp:p.pc.localDescription
+  });
+
+ }
+
+
+ remoteSDP.value="";
+
+ }catch(e){
+
+ log("Kode salah");
+
+ }
 
 };
 
 
-// COPY
-$("btnCopy").onclick=async()=>{
-
-  if(!localSDP.value)return;
-
-  await navigator.clipboard
-    .writeText(localSDP.value);
-
-  log("Kode disalin");
-
-};
-
-
-// KIRIM CHAT
+// kirim chat
 send.onclick=()=>{
 
-  if(!active)return;
+ let p=peers.get(active);
 
-  if(msg.value){
+ if(p?.dc?.readyState=="open" && msg.value){
 
-    sendPeer(active,msg.value);
+  p.dc.send(msg.value);
 
-    log(msg.value,"me");
+  log(msg.value,"me");
 
-    msg.value="";
-  }
+  msg.value="";
+ }
 
 };
 
 
 msg.onkeypress=e=>{
-  if(e.key=="Enter")
-    send.click();
+ if(e.key=="Enter")send.click();
 };
 
 
-// EVENT DARI peer.js
+// copy
+$("btnCopy").onclick=()=>{
 
-function peerOpen(id){
+ navigator.clipboard.writeText(localSDP.value);
 
-  if(!active)
-    active=id;
+ log("Kode disalin");
 
-  status.textContent=
-    "Konek : "+id;
-
-  draw();
-}
-
-
-function peerMessage(id,text){
-
-  log(id+": "+text,"peer");
-
-}
-
-
-function peerClose(id){
-
-  log(id+" putus");
-
-  if(active==id)
-    active=null;
-
-  draw();
-}
+};
