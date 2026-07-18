@@ -8,6 +8,7 @@ msg=$("msgInput"),
 send=$("btnSend");
 
 const peerName=$("peerName");
+const GAS="https://script.google.com/macros/s/AKfycbzIHG5X4pf8CkHVJq3hWas0p6NdYQPd_Hf9uJXhmgd2FkMJxOCm2HIsaW0hafu7q0OmrA/exec";
 
 const peers=new Map();
 let active=null;
@@ -19,6 +20,32 @@ iceServers:[
 ]};
 
 const id=()=>"p_"+Math.random().toString(36).slice(2,8);
+async function api(action,data={}){
+
+  if(action=="list"){
+    const r=await fetch(GAS,{
+      method:"POST",
+      body:JSON.stringify({action})
+    });
+
+    return await r.json();
+  }
+
+  await fetch(GAS,{
+    method:"POST",
+    mode:"no-cors",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+      action,
+      ...data
+    })
+  });
+
+  return {success:true};
+
+}
 
 function log(t,c="sys"){
 let d=document.createElement("div");
@@ -90,12 +117,20 @@ dc(pid);
 let offer=await peer.pc.createOffer();
 await peer.pc.setLocalDescription(offer);
 
-localSDP.value=JSON.stringify({
+const offer=JSON.stringify({
 id:pid,
+type:"offer",
 sdp:peer.pc.localDescription
 });
 
-log("Offer dibuat");
+localSDP.value=offer;
+
+await api("save",{
+text:offer
+});
+
+log("Offer dibuat & dikirim");
+
 };
 $("btnAnswer").onclick=async()=>{
 
