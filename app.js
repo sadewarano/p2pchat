@@ -212,8 +212,9 @@ log("Kode salah");
 
 $("btnSend").onclick=()=>{
 
-if(!active)return;
+console.log(active, peers.get(active));
 
+if(!active)return;
 let p=peers.get(active);
 
 if(
