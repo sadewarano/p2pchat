@@ -145,16 +145,18 @@ $("btnAnswer").onclick=async()=>{
 try{
 
 // jika kolom kosong, ambil dari clipboard
-if(!remoteSDP.value.trim()){
+const offer = await getLatestOffer();
 
-  remoteSDP.value =
-  await navigator.clipboard.readText();
-
+if(!offer){
+  log("Belum ada Offer");
+  return;
 }
+
+let {id,sdp}=offer;
+
 
 
 // proses kode
-let {id,sdp}=JSON.parse(remoteSDP.value);
 
 
 let p=peers.get(id);
@@ -281,4 +283,27 @@ if(btnSetting){
   btnSetting.onclick=()=>{
     $("connectionBox").classList.toggle("hidden");
   };
+}
+async function getLatestOffer(){
+
+  const r = await api("list");
+
+  if(!r.success) return null;
+
+  for(let i=r.data.length-1;i>=0;i--){
+
+    try{
+
+      const d=JSON.parse(r.data[i].text);
+
+      if(d.type=="offer"){
+        return d;
+      }
+
+    }catch(e){}
+
+  }
+
+  return null;
+
 }
