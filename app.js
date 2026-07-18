@@ -1,116 +1,236 @@
-const $ = id => document.getElementById(id);
+const $=id=>document.getElementById(id);
 
-const status = $("status");
-const peerName = $("peerName");
-const chat = $("chatBox");
-const peerListBox = $("peerList");
+const status=$("status"),
+localSDP=$("localSDP"),
+remoteSDP=$("remoteSDP"),
+chat=$("chatBox"),
+msg=$("msgInput"),
+send=$("btnSend");
 
-let myId = "";
-let peerList = [];
+const peerName=$("peerName");
 
-// Ganti sesuai alamat servermu
-const ws = new WebSocket("ws://127.0.0.1:8080");
+const peers=new Map();
+let active=null;
 
-function log(msg){
-    let d = document.createElement("div");
-    d.className = "msg sys";
-    d.textContent = msg;
-    chat.appendChild(d);
-    chat.scrollTop = chat.scrollHeight;
+const cfg={
+iceServers:[
+{urls:"stun:stun.l.google.com:19302"},
+{urls:"stun:stun1.l.google.com:19302"}
+]};
+
+const id=()=>"p_"+Math.random().toString(36).slice(2,8);
+
+function log(t,c="sys"){
+let d=document.createElement("div");
+d.className="msg "+c;
+d.textContent=t;
+chat.appendChild(d);
+chat.scrollTop=chat.scrollHeight;
 }
 
-ws.onopen = () => {
+function draw(){
 
-    status.textContent = "Terhubung ke Server";
-
-    log("WebSocket Connected");
-
-};
-
-ws.onclose = () => {
-
-    status.textContent = "Server Offline";
-
-    log("WebSocket Closed");
-
-};
-
-ws.onerror = () => {
-
-    status.textContent = "Error";
-
-};
-
-ws.onmessage = e => {
-
-    let data = JSON.parse(e.data);
-
-    switch(data.type){
-
-        case "id":
-
-            myId = data.id;
-
-            peerName.textContent =
-            "ID : " + myId;
-
-            log("ID saya : " + myId);
-
-        break;
-
-        case "peers":
-
-    peerList =
-    data.peers.filter(x=>x!=myId);
-
-    drawPeers();
-
-    break;
-
-    }
-
-};
-
-function drawPeers(){
-
-    peerListBox.innerHTML = "";
-
-    if(peerList.length === 0){
-
-        peerListBox.innerHTML =
-        "<small>Tidak ada peer online</small>";
-
-        return;
-
-    }
-
-    peerList.forEach(id=>{
-
-        let b = document.createElement("button");
-
-        b.textContent = id;
-
-        b.style.display = "block";
-        b.style.width = "100%";
-        b.style.margin = "5px 0";
-
-        b.onclick = ()=>{
-
-            log("Klik peer : "+id);
-
-            // nanti di Bagian 3
-            connectPeer(id);
-
-        };
-
-        peerListBox.appendChild(b);
-
-    });
+send.disabled = !active ||
+peers.get(active)?.dc?.readyState !== "open";
 
 }
 
-function connectPeer(id){
+function dc(id){
+let p=peers.get(id);
 
-    log("Connect ke "+id);
+p.dc.onopen=()=>{
 
+if(!active)
+active=id;
+
+peerName.textContent=id;
+status.textContent="Online";
+
+draw();
+
+};
+
+p.dc.onmessage=e=>log(e.data,"peer");
+
+p.dc.onclose=()=>{
+peers.delete(id);
+if(active==id)active=[...peers.keys()][0];
+draw();
+};
+}
+
+function pc(id){
+let p=peers.get(id);
+
+p.pc.onicecandidate=()=>{
+if(p.pc.localDescription)
+localSDP.value=JSON.stringify({
+id:id,
+sdp:p.pc.localDescription
+});
+};
+}
+
+$("btnOffer").onclick=async()=>{
+
+let pid=id();
+
+let peer={
+pc:new RTCPeerConnection(cfg),
+dc:null
+};
+
+peer.dc=peer.pc.createDataChannel("chat");
+
+peers.set(pid,peer);
+
+pc(pid);
+dc(pid);
+
+let offer=await peer.pc.createOffer();
+await peer.pc.setLocalDescription(offer);
+
+localSDP.value=JSON.stringify({
+id:pid,
+sdp:peer.pc.localDescription
+});
+
+log("Offer dibuat");
+};
+$("btnAnswer").onclick=async()=>{
+
+try{
+
+// jika kolom kosong, ambil dari clipboard
+if(!remoteSDP.value.trim()){
+
+  remoteSDP.value =
+  await navigator.clipboard.readText();
+
+}
+
+
+// proses kode
+let {id,sdp}=JSON.parse(remoteSDP.value);
+
+
+let p=peers.get(id);
+
+
+if(!p){
+
+p={
+ pc:new RTCPeerConnection(cfg),
+ dc:null
+};
+
+peers.set(id,p);
+
+pc(id);
+
+
+p.pc.ondatachannel=e=>{
+ p.dc=e.channel;
+ dc(id);
+};
+
+}
+
+
+
+if(sdp.type=="offer"){
+
+await p.pc.setRemoteDescription(sdp);
+
+
+let ans=await p.pc.createAnswer();
+
+await p.pc.setLocalDescription(ans);
+
+
+localSDP.value=JSON.stringify({
+ id:id,
+ sdp:p.pc.localDescription
+});
+
+
+log("Answer dibuat");
+
+
+}else{
+
+
+await p.pc.setRemoteDescription(sdp);
+
+log("Koneksi berhasil");
+
+
+}
+
+
+remoteSDP.value="";
+
+
+}catch(e){
+
+log("Kode salah");
+
+}
+
+};
+
+$("btnSend").onclick=()=>{
+
+if(!active)return;
+
+let p=peers.get(active);
+
+if(
+p &&
+p.dc &&
+p.dc.readyState=="open" &&
+msg.value
+){
+
+p.dc.send(msg.value);
+
+log(msg.value,"me");
+
+msg.value="";
+
+}
+
+};
+
+msg.onkeypress=e=>{
+if(e.key=="Enter")
+$("btnSend").click();
+};
+
+const btnCopy = $("btnCopy");
+
+if(btnCopy){
+btnCopy.onclick = async () => {
+if(!localSDP.value) return;
+
+localSDP.focus();  
+localSDP.select();  
+
+try{  
+  await navigator.clipboard.writeText(localSDP.value);  
+}catch(e){  
+  document.execCommand("copy");  
+}  
+
+log("Kode disalin");
+
+};
+}
+
+const btnSetting=$("btnSetting");
+
+if(btnSetting){
+  btnSetting.onclick=()=>{
+    $("connectionBox").classList.toggle("hidden");
+  };
 }
