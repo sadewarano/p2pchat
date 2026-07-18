@@ -3,6 +3,7 @@ const $ = id => document.getElementById(id);
 const status = $("status");
 const peerName = $("peerName");
 const chat = $("chatBox");
+const peerListBox = $("peerList");
 
 let myId = "";
 let peerList = [];
@@ -59,18 +60,57 @@ ws.onmessage = e => {
 
         case "peers":
 
-            peerList =
-            data.peers.filter(x => x != myId);
+    peerList =
+    data.peers.filter(x=>x!=myId);
 
-            log(
-            "Peer online : "
-            + peerList.length
-            );
+    drawPeers();
 
-            console.log(peerList);
-
-        break;
+    break;
 
     }
 
 };
+
+function drawPeers(){
+
+    peerListBox.innerHTML = "";
+
+    if(peerList.length === 0){
+
+        peerListBox.innerHTML =
+        "<small>Tidak ada peer online</small>";
+
+        return;
+
+    }
+
+    peerList.forEach(id=>{
+
+        let b = document.createElement("button");
+
+        b.textContent = id;
+
+        b.style.display = "block";
+        b.style.width = "100%";
+        b.style.margin = "5px 0";
+
+        b.onclick = ()=>{
+
+            log("Klik peer : "+id);
+
+            // nanti di Bagian 3
+            connectPeer(id);
+
+        };
+
+        peerListBox.appendChild(b);
+
+    });
+
+}
+
+function connectPeer(id){
+
+    log("Connect ke "+id);
+
+}
