@@ -141,9 +141,7 @@ log("Offer dibuat & dikirim");
 
 };
 $("btnAnswer").onclick=async()=>{
-
 try{
-
 // jika kolom kosong, ambil dari clipboard
 const offer = await getLatestOffer();
 
@@ -151,42 +149,26 @@ if(!offer){
   log("Belum ada Offer");
   return;
 }
-
 let {id,sdp}=offer;
-
-
-
-// proses kode
-
-
 let p=peers.get(id);
-
-
 if(!p){
-
 p={
  pc:new RTCPeerConnection(cfg),
  dc:null
 };
 
 peers.set(id,p);
-
 pc(id);
-
 
 p.pc.ondatachannel=e=>{
  p.dc=e.channel;
  dc(id);
 };
-
 }
-
-
 
 if(sdp.type=="offer"){
 
 await p.pc.setRemoteDescription(sdp);
-
 
 let ans=await p.pc.createAnswer();
 
@@ -209,24 +191,23 @@ log("Answer dibuat & dikirim");
 
 }else{
 
+await p.pc.setRemoteDescription(d.sdp);
 
-await p.pc.setRemoteDescription(sdp);
-
+active=d.id;
+p.dc.onopen=()=>{
+  active=d.id;
+  status.textContent="Online";
+  peerName.textContent=d.id;
+  draw();
+};
 log("Koneksi berhasil");
 
-
 }
-
 
 remoteSDP.value="";
-
-
 }catch(e){
-
 log("Kode salah");
-
 }
-
 };
 
 $("btnSend").onclick=()=>{
@@ -243,13 +224,9 @@ msg.value
 ){
 
 p.dc.send(msg.value);
-
 log(msg.value,"me");
-
 msg.value="";
-
 }
-
 };
 
 msg.onkeypress=e=>{
@@ -271,9 +248,7 @@ try{
 }catch(e){  
   document.execCommand("copy");  
 }  
-
 log("Kode disalin");
-
 };
 }
 
@@ -307,3 +282,35 @@ async function getLatestOffer(){
   return null;
 
 }
+$("btnGetAnswer").onclick=async()=>{
+try{
+const r=await api("list");
+if(!r.success){
+  log("Gagal ambil data");
+  return;
+}
+
+for(let i=r.data.length-1;i>=0;i--){
+try{
+const d=JSON.parse(r.data[i].text);
+
+if(d.type=="answer"){
+let p=peers.get(d.id);
+
+if(!p){
+  log("Peer tidak ditemukan");
+  return;
+}
+
+await p.pc.setRemoteDescription(d.sdp);
+
+log("Koneksi berhasil");
+break;
+}
+}catch(e){}
+}
+}catch(e){
+
+log("Gagal ambil jawaban");
+}
+};
