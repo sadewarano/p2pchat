@@ -191,7 +191,7 @@ log("Answer dibuat & dikirim");
 
 }else{
 
-await p.pc.setRemoteDescription(d.sdp);
+await p.pc.setRemoteDescription(sdp);
 
 active=d.id;
 p.dc.onopen=()=>{
@@ -295,17 +295,17 @@ try{
 const d=JSON.parse(r.data[i].text);
 
 if(d.type=="answer"){
-let p=peers.get(d.id);
+let p=[...peers.values()][0];
 
 if(!p){
-  log("Peer tidak ditemukan");
+  log("Peer tidak ada");
   return;
 }
-
 await p.pc.setRemoteDescription(d.sdp);
-
+active=[...peers.keys()][0];
 log("Koneksi berhasil");
-break;
+draw();
+
 }
 }catch(e){}
 }
