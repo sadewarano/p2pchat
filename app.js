@@ -89,15 +89,26 @@ draw();
 function pc(id){
 let p=peers.get(id);
 
-p.pc.onicecandidate=()=>{
-if(p.pc.localDescription)
-localSDP.value=JSON.stringify({
+p.pc.onicecandidate=async()=>{
+
+if(!p.pc.localDescription)return;
+
+const type=p.pc.localDescription.type;
+
+const data=JSON.stringify({
 id:id,
+type:type,
 sdp:p.pc.localDescription
 });
+
+localSDP.value=data;
+
+await api("save",{
+text:data
+});
+
 };
 }
-
 $("btnOffer").onclick=async()=>{
 
 let pid=id();
@@ -117,16 +128,16 @@ dc(pid);
 let offer=await peer.pc.createOffer();
 await peer.pc.setLocalDescription(offer);
 
-const offer=JSON.stringify({
+const offerData=JSON.stringify({
 id:pid,
 type:"offer",
 sdp:peer.pc.localDescription
 });
 
-localSDP.value=offer;
+localSDP.value=offerData;
 
 await api("save",{
-text:offer
+text:offerData
 });
 
 log("Offer dibuat & dikirim");
