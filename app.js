@@ -86,28 +86,24 @@ draw();
 };
 }
 
-function pc(id){
-let p=peers.get(id);
+p.pc.onicecandidate = async (e) => {
 
-p.pc.onicecandidate=async()=>{
+    if (e.candidate) return;
 
-if(!p.pc.localDescription)return;
+    const data = JSON.stringify({
+        id:id,
+        type:p.pc.localDescription.type,
+        sdp:p.pc.localDescription
+    });
 
-const type=p.pc.localDescription.type;
+    localSDP.value = data;
 
-const data=JSON.stringify({
-id:id,
-type:type,
-sdp:p.pc.localDescription
-});
-
-localSDP.value=data;
-
-await api("save",{
-text:data
-});
+    await api("save",{
+        text:data
+    });
 
 };
+
 }
 $("btnOffer").onclick=async()=>{
 
