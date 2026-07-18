@@ -193,7 +193,7 @@ log("Answer dibuat & dikirim");
 
 await p.pc.setRemoteDescription(sdp);
 
-active=d.id;
+active=id;
 p.dc.onopen=()=>{
   active=d.id;
   status.textContent="Online";
@@ -302,7 +302,16 @@ if(!p){
   return;
 }
 await p.pc.setRemoteDescription(d.sdp);
+
 active=[...peers.keys()][0];
+
+p.dc.onopen=()=>{
+  active=[...peers.keys()][0];
+  status.textContent="Online";
+  peerName.textContent=active;
+  draw();
+};
+
 log("Koneksi berhasil");
 draw();
 
