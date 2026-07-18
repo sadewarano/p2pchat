@@ -1,278 +1,258 @@
-const $=id=>document.getElementById(id);
 
-const status=$("status"),
-localSDP=$("localSDP"),
-remoteSDP=$("remoteSDP"),
-chat=$("chatBox"),
-msg=$("msgInput"),
-send=$("btnSend");
+// ===== 1. SELECTOR SINGKAT =====
+const $ = id => document.getElementById(id);
 
-const peerName=$("peerName");
-const GAS="https://script.google.com/macros/s/AKfycbzIHG5X4pf8CkHVJq3hWas0p6NdYQPd_Hf9uJXhmgd2FkMJxOCm2HIsaW0hafu7q0OmrA/exec";
+// ===== 2. ELEMEN DOM =====
+const statusEl   = $("status");
+const localSDP   = $("localSDP");
+const remoteSDP  = $("remoteSDP");
+const chatBox    = $("chatBox");
+const msgInput   = $("msgInput");
+const btnSend    = $("btnSend");
+const peerNameEl = $("peerName");
+const btnCopy    = $("btnCopy");
+const btnSetting = $("btnSetting");
 
-const peers=new Map();
-let active=null;
+// ===== 3. KONFIGURASI =====
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzIHG5X4pf8CkHVJq3hWas0p6NdYQPd_Hf9uJXhmgd2FkMJxOCm2HIsaW0hafu7q0OmrA/exec";
 
-const cfg={
-iceServers:[
-{urls:"stun:stun.l.google.com:19302"},
-{urls:"stun:stun1.l.google.com:19302"}
-]};
+const peers = new Map();
+let activePeerId = null;
 
-const id=()=>"p_"+Math.random().toString(36).slice(2,8);
-async function api(action,data={}){
+const RTC_CONFIG = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" }
+  ]
+};
 
-  if(action=="list"){
-    const r=await fetch(GAS,{
-      method:"POST",
-      body:JSON.stringify({action})
+// ===== 4. HELPER FUNCTIONS =====
+const generatePeerId = () => "p_" + Math.random().toString(36).slice(2, 8);
+
+async function api(action, data = {}) {
+  if (action == "list") {
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      body: JSON.stringify({ action })
     });
-
-    return await r.json();
+    return await res.json();
   }
 
-  await fetch(GAS,{
-    method:"POST",
-    mode:"no-cors",
-    headers:{
-      "Content-Type":"application/json"
+  await fetch(GAS_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: {
+      "Content-Type": "application/json"
     },
-    body:JSON.stringify({
+    body: JSON.stringify({
       action,
       ...data
     })
   });
 
-  return {success:true};
-
+  return { success: true };
 }
 
-function log(t,c="sys"){
-let d=document.createElement("div");
-d.className="msg "+c;
-d.textContent=t;
-chat.appendChild(d);
-chat.scrollTop=chat.scrollHeight;
+function addLog(text, className = "sys") {
+  let div = document.createElement("div");
+  div.className = "msg " + className;
+  div.textContent = text;
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-function draw(){
-
-send.disabled = !active ||
-peers.get(active)?.dc?.readyState !== "open";
-
+function updateUI() {
+  btnSend.disabled = !activePeerId ||
+    peers.get(activePeerId)?.dc?.readyState !== "open";
 }
 
-function dc(id){
-let p=peers.get(id);
+// ===== 5. SETUP WEBRTC =====
+function setupDataChannel(peerId) {
+  let peer = peers.get(peerId);
 
-p.dc.onopen=()=>{
+  peer.dc.onopen = () => {
+    if (!activePeerId)
+      activePeerId = peerId;
 
-if(!active)
-active=id;
+    peerNameEl.textContent = peerId;
+    statusEl.textContent = "Online";
+    updateUI();
+  };
 
-peerName.textContent=id;
-status.textContent="Online";
+  peer.dc.onmessage = e => addLog(e.data, "peer");
 
-draw();
-
-};
-
-p.dc.onmessage=e=>log(e.data,"peer");
-
-p.dc.onclose=()=>{
-peers.delete(id);
-if(active==id)active=[...peers.keys()][0];
-draw();
-};
+  peer.dc.onclose = () => {
+    peers.delete(peerId);
+    if (activePeerId == peerId) activePeerId = [...peers.keys()][0];
+    updateUI();
+  };
 }
 
-p.pc.onicecandidate = async (e) => {
+function setupPeerConnection(peerId) {
+  let peer = peers.get(peerId);
 
-    if (e.candidate) return;
+  peer.pc.onicecandidate = async (e) => {
+
+  if (e.candidate) return;
+    if (!peer.pc.localDescription) return;
+
+    const type = peer.pc.localDescription.type;
 
     const data = JSON.stringify({
-        id:id,
-        type:p.pc.localDescription.type,
-        sdp:p.pc.localDescription
+      id: peerId,
+      type: type,
+      sdp: peer.pc.localDescription
     });
 
     localSDP.value = data;
 
-    await api("save",{
-        text:data
+    await api("save", {
+      text: data
     });
-
-};
-
-}
-$("btnOffer").onclick=async()=>{
-
-let pid=id();
-
-let peer={
-pc:new RTCPeerConnection(cfg),
-dc:null
-};
-
-peer.dc=peer.pc.createDataChannel("chat");
-
-peers.set(pid,peer);
-
-pc(pid);
-dc(pid);
-
-let offer=await peer.pc.createOffer();
-await peer.pc.setLocalDescription(offer);
-
-const offerData=JSON.stringify({
-id:pid,
-type:"offer",
-sdp:peer.pc.localDescription
-});
-
-localSDP.value=offerData;
-
-await api("save",{
-text:offerData
-});
-
-log("Offer dibuat & dikirim");
-
-};
-$("btnAnswer").onclick=async()=>{
-
-try{
-
-// jika kolom kosong, ambil dari clipboard
-if(!remoteSDP.value.trim()){
-
-  remoteSDP.value =
-  await navigator.clipboard.readText();
-
+  };
 }
 
+// ===== 6. EVENT HANDLER =====
+$("btnOffer").onclick = async () => {
+  let newPeerId = generatePeerId();
 
-// proses kode
-let {id,sdp}=JSON.parse(remoteSDP.value);
+  let newPeer = {
+    pc: new RTCPeerConnection(RTC_CONFIG),
+    dc: null
+  };
 
+  newPeer.dc = newPeer.pc.createDataChannel("chat");
+  peers.set(newPeerId, newPeer);
 
-let p=peers.get(id);
+  setupPeerConnection(newPeerId);
+  setupDataChannel(newPeerId);
 
+  let offer = await newPeer.pc.createOffer();
+  await newPeer.pc.setLocalDescription(offer);
 
-if(!p){
+  const offerData = JSON.stringify({
+    id: newPeerId,
+    type: "offer",
+    sdp: newPeer.pc.localDescription
+  });
 
-p={
- pc:new RTCPeerConnection(cfg),
- dc:null
+  localSDP.value = offerData;
+
+  addLog("Offer dibuat & dikirim");
 };
 
-peers.set(id,p);
+$("btnAnswer").onclick = async () => {
+  try {
+    // jika kosong, ambil dari clipboard
+    if (!remoteSDP.value.trim()) {
+      remoteSDP.value =
+        await navigator.clipboard.readText();
+    }
 
-pc(id);
+    // proses kode
+    let { id, sdp } = JSON.parse(remoteSDP.value);
+    let peer = peers.get(id);
 
+    if (!peer) {
+      peer = {
+        pc: new RTCPeerConnection(RTC_CONFIG),
+        dc: null
+      };
 
-p.pc.ondatachannel=e=>{
- p.dc=e.channel;
- dc(id);
+      peers.set(id, peer);
+      setupPeerConnection(id);
+
+      peer.pc.ondatachannel = e => {
+        peer.dc = e.channel;
+        setupDataChannel(id);
+      };
+    }
+
+    if (sdp.type == "offer") {
+      await peer.pc.setRemoteDescription(sdp);
+      let answer = await peer.pc.createAnswer();
+      await peer.pc.setLocalDescription(answer);
+
+      localSDP.value = JSON.stringify({
+        id: id,
+        sdp: peer.pc.localDescription
+      });
+
+      addLog("Answer dibuat");
+    } else {
+      await peer.pc.setRemoteDescription(sdp);
+      addLog("Koneksi berhasil");
+    }
+
+    remoteSDP.value = "";
+  } catch (e) {
+    addLog("Kode salah");
+  }
 };
 
+$("btnSend").onclick = () => {
+  if (!activePeerId) return;
+
+  let peer = peers.get(activePeerId);
+
+  if (
+    peer &&
+    peer.dc &&
+    peer.dc.readyState == "open" &&
+    msgInput.value
+  ) {
+    peer.dc.send(msgInput.value);
+    addLog(msgInput.value, "me");
+    msgInput.value = "";
+  }
+};
+
+msgInput.onkeypress = e => {
+  if (e.key == "Enter")
+    $("btnSend").click();
+};
+
+if (btnCopy) {
+  btnCopy.onclick = async () => {
+    if (!localSDP.value) return;
+
+    localSDP.focus();
+    localSDP.select();
+
+    try {
+      await navigator.clipboard.writeText(localSDP.value);
+    } catch (e) {
+      document.execCommand("copy");
+    }
+
+    addLog("Kode disalin");
+  };
 }
 
-
-
-if(sdp.type=="offer"){
-
-await p.pc.setRemoteDescription(sdp);
-
-
-let ans=await p.pc.createAnswer();
-
-await p.pc.setLocalDescription(ans);
-
-
-localSDP.value=JSON.stringify({
- id:id,
- sdp:p.pc.localDescription
-});
-
-
-log("Answer dibuat");
-
-
-}else{
-
-
-await p.pc.setRemoteDescription(sdp);
-
-log("Koneksi berhasil");
-
-
-}
-
-
-remoteSDP.value="";
-
-
-}catch(e){
-
-log("Kode salah");
-
-}
-
-};
-
-$("btnSend").onclick=()=>{
-
-if(!active)return;
-
-let p=peers.get(active);
-
-if(
-p &&
-p.dc &&
-p.dc.readyState=="open" &&
-msg.value
-){
-
-p.dc.send(msg.value);
-
-log(msg.value,"me");
-
-msg.value="";
-
-}
-
-};
-
-msg.onkeypress=e=>{
-if(e.key=="Enter")
-$("btnSend").click();
-};
-
-const btnCopy = $("btnCopy");
-
-if(btnCopy){
-btnCopy.onclick = async () => {
-if(!localSDP.value) return;
-
-localSDP.focus();  
-localSDP.select();  
-
-try{  
-  await navigator.clipboard.writeText(localSDP.value);  
-}catch(e){  
-  document.execCommand("copy");  
-}  
-
-log("Kode disalin");
-
-};
-}
-
-const btnSetting=$("btnSetting");
-
-if(btnSetting){
-  btnSetting.onclick=()=>{
+if (btnSetting) {
+  btnSetting.onclick = () => {
     $("connectionBox").classList.toggle("hidden");
   };
+}
+
+async function getLatestOffer(){
+
+  const r = await api("list");
+
+  if(!r.success) return null;
+
+  for(let i = r.data.length - 1; i >= 0; i--){
+
+    try{
+
+      const d = JSON.parse(r.data[i].text);
+
+      if(d.type == "offer") return d;
+
+    }catch(e){}
+
+  }
+
+  return null;
+
 }
