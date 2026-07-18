@@ -138,7 +138,11 @@ $("btnOffer").onclick = async () => {
 
   localSDP.value = offerData;
 
-  addLog("Offer dibuat & dikirim");
+await api("save",{
+  text:offerData
+});
+
+addLog("Offer dibuat & dikirim");
 };
 
 $("btnAnswer").onclick = async () => {
