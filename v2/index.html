@@ -1,114 +1,263 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>P2P Chat</title>
-<link rel="stylesheet" href="style.css">
-</head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Manajemen Link Produk</title>
+    <!-- FIX 1: Menggunakan CDN Pico CSS Resmi yang Benar -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            padding: 30px 15px;
+        }
+        .main-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        /* Desain Toolbar Baru (FIX 7 & 8) */
+        .app-panel {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+            margin-bottom: 30px;
+        }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .panel-header h2 {
+            margin: 0;
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: #1e293b;
+        }
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        @media (min-width: 768px) {
+            .toolbar { width: auto; }
+        }
+        .toolbar button, .toolbar label.btn-upload {
+            margin: 0;
+            padding: 10px 16px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-add { background-color: var(--primary-color); color: white; }
+        .btn-add:hover { background-color: #2563eb; }
+        .btn-export { background-color: #4b5563; color: white; }
+        .btn-export:hover { background-color: #374151; }
+        .btn-import { background-color: #059669; color: white; }
+        .btn-import:hover { background-color: #047857; }
+        .btn-clear-all { background-color: #dc2626; color: white; }
+        .btn-clear-all:hover { background-color: #b91c1c; }
+        
+        /* Input Pencarian (FIX 7) */
+        .search-box {
+            margin-top: 15px;
+            margin-bottom: 0 !important;
+        }
 
+        /* Desain Grid dan Kartu Produk */
+        .product-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        @media (min-width: 768px) {
+            .product-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        .product-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin: 0;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.02), 0 10px 15px -3px rgb(0 0 0 / 0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 1px solid #f1f5f9;
+        }
+        .product-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 10px;
+            word-break: break-word;
+        }
+        .link-badge-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+        .link-item {
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            border: 1px solid #e2e8f0;
+        }
+        .link-item.empty {
+            background: #fffefc;
+            border-style: dashed;
+            color: #94a3b8;
+        }
+        .link-label {
+            font-weight: 700;
+            color: #64748b;
+            min-width: 55px;
+            margin-right: 8px;
+        }
+        .link-value {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #334155;
+        }
+        .card-actions {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 8px;
+            margin-top: auto;
+        }
+        .card-actions button {
+            margin: 0;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+        }
+        .btn-copy-all { background-color: #10b981; color: white; }
+        .btn-copy-all:hover { background-color: #059669; }
+        .btn-edit { background-color: #f59e0b; color: white; }
+        .btn-edit:hover { background-color: #d97706; }
+        .btn-delete { background-color: #ef4444; color: white; }
+        .btn-delete:hover { background-color: #dc2626; }
+
+        /* Modal Dialog */
+        dialog article {
+            max-width: 600px;
+            width: 100%;
+            border-radius: 16px;
+            padding: 28px;
+        }
+        .modal-title { font-weight: 800; margin-bottom: 20px; color: #1e293b; }
+        .input-group-links {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        @media (min-width: 576px) {
+            .input-group-links { grid-template-columns: repeat(2, 1fr); }
+        }
+        .link-field { margin-bottom: 0 !important; }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .modal-footer button { margin: 0; padding: 10px 20px; border-radius: 8px; }
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            color: #64748b;
+            border: 2px dashed #cbd5e1;
+        }
+        /* Sembunyikan input file asli untuk estetika */
+        #inputImport { display: none; }
+    </style>
+</head>
 <body>
 
+<main class="main-container">
 
-<header>
+    <!-- Panel Kontrol Utama / Toolbar -->
+    <div class="app-panel">
+        <div class="panel-header">
+            <h2>📦 DB Link Produk</h2>
+            <div class="toolbar">
+                <button id="btnTambah" class="btn-add">➕ Tambah</button>
+                <button id="btnExport" class="btn-export">⬆️ Ekspor</button>
+                <label for="inputImport" class="btn-import">⬇️ Impor</label>
+                <input type="file" id="inputImport" accept=".json">
+                <button id="btnHapusSemua" class="btn-clear-all">🗑️ Hapus Semua</button>
+            </div>
+        </div>
+        <!-- Input Live Search -->
+        <input type="search" id="txtCari" class="search-box" placeholder="🔍 Cari nama produk di sini...">
+    </div>
 
-<div class="profile">
+    <!-- Grid Tampilan Data -->
+    <div id="produkList" class="product-grid">
+        <div class="empty-state">Memuat data produk...</div>
+    </div>
 
-<div id="peerName">
-🌐 P2P Chat
-</div>
+</main>
 
-<small id="status">
-Belum Konek
-</small>
+<!-- Modal Pop-up Form -->
+<dialog id="dlgProduk">
+    <article>
+        <h3 id="dlgTitle" class="modal-title">Tambah Produk Baru</h3>
+        
+        <label for="namaProduk" style="font-weight: 600; color: #475569;">Nama Produk</label>
+        <input id="namaProduk" type="text" placeholder="Masukkan nama produk..." required>
 
-</div>
+        <label style="font-weight: 600; color: #475569; margin-top: 15px; display: block;">Daftar Link (Maksimal 6)</label>
+        
+        <div class="input-group-links">
+            <input id="link1" class="link-field" type="url" placeholder="Link 1">
+            <input id="link2" class="link-field" type="url" placeholder="Link 2">
+            <input id="link3" class="link-field" type="url" placeholder="Link 3">
+            <input id="link4" class="link-field" type="url" placeholder="Link 4">
+            <input id="link5" class="link-field" type="url" placeholder="Link 5">
+            <input id="link6" class="link-field" type="url" placeholder="Link 6">
+        </div>
 
-
-<button id="btnSetting">
-⚙️
-</button>
-
-</header>
-
-
-
-<div class="layout">
-
-
-<div class="chat">
-
-<div id="chatBox">
-</div>
-
-
-<div class="input">
-
-<input id="msgInput"
-placeholder="Ketik pesan...">
-
-
-<button id="btnSend" disabled>
-➤
-</button>
-
-
-</div>
-
-</div>
-
-
-</div>
-
-
-
-<div id="connectionBox" class="card hidden">
-
-<h3>Koneksi Baru</h3>
-
-
-<textarea id="localSDP"
-readonly
-placeholder="Kode saya">
-</textarea>
-
-
-<button id="btnCopy">
-📋 Copy
-</button>
-
-
-<textarea id="remoteSDP"
-placeholder="Tempel kode teman">
-</textarea>
-
-
-
-<div class="row">
-
-<button id="btnOffer">
-🟢 Buat
-</button>
-
-
-<button id="btnAnswer">
-🔵 Paste & Proses
-</button>
-
-
-</div>
-
-
-</div>
-
-
-
-<div id="toast">
-Tersalin
-</div>
-
+        <footer class="modal-footer">
+            <button class="secondary" id="btnBatal">Batal</button>
+            <button id="btnSimpan" style="background-color: var(--primary-color); border: none;">Simpan Data</button>
+        </footer>
+    </article>
+</dialog>
 
 <script src="app.js"></script>
-
 </body>
 </html>
